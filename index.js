@@ -1,7 +1,7 @@
 const express = require('express');
 const dotenv = require('dotenv');
 const { verifySecret } = require('./middleware/authMiddleware')
-const prisma = require('./db/config')
+const prisma = require('./db/config').prisma
 
 dotenv.config();
 
@@ -13,17 +13,17 @@ app.post('/api/shipping/create', verifySecret, async (req, res)=>{
   if (!userId || !productId || !count){
     return res.status(404).json({"error": "All fields required"})
   }
-  const [order] = await prisma.shipping.create({
+  const order = await prisma.shipping.create({
     data: {
       userId,
       productId,
       count
     }
   })
-  return res.status(201).json(order[0])
+  return res.status(201).json(order)
 })
 
-app.put('/api/shipping/create', verifySecret, async(req, res)=>{
+app.put('/api/shipping/cancel', verifySecret, async(req, res)=>{
   const {shippingId} = req.body
   if (!shippingId) {
     return res.status(404).json({"error": "Missing shippingId"})
@@ -40,14 +40,14 @@ app.put('/api/shipping/create', verifySecret, async(req, res)=>{
 app.get('/api/shipping/get', verifySecret, async (req, res)=>{
   const userId = req.query.userId
   if (userId) {
-    const [order] = await prisma.shipping.findUnique({
+    const order = await prisma.shipping.findMany({
       where: {
-        userId 
+        userId: parseInt(userId)
       }
     })
     return res.status(200).json(order)
   }
-  const [orders] = await prisma.shipping.findMany()
+  const orders = await prisma.shipping.findMany()
   return res.status(200).json(orders)
 })
 
